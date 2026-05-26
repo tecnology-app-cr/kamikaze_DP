@@ -382,34 +382,6 @@ footer{position:relative;z-index:1;text-align:center;padding:14px;font-family:'D
       </div>
     </div>
 
-    <!-- ── GALERÍA ── -->
-    <div class="sec-div"><span class="sec-ttl">📸 Galería de Evidencias — Antes &amp; Después</span><button onclick="document.getElementById('scriptSetup').style.display=document.getElementById('scriptSetup').style.display==='none'?'block':'none'" style="margin-left:12px;padding:3px 10px;border-radius:5px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--gold);font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;">⚙️ Config</button></div>
-    <div class="gallery-section">
-      <!-- SCRIPT URL SETUP -->
-      <div id="scriptSetup" style="padding:14px 16px;border-bottom:1px solid var(--br);background:rgba(245,158,11,.05);display:none;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:.68rem;font-weight:700;color:var(--gold);white-space:nowrap;">⚙️ Apps Script URL:</span>
-          <input id="scriptUrlInput" type="text" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbxD6Y1_jUZz3dlUdbnm_BMaw4tbYHqCiD0km8gEpMYYeqvgrENkCj7Xrlwn16uffum2/exec"
-            style="flex:1;min-width:240px;background:var(--s2);border:1px solid rgba(245,158,11,.3);color:var(--text);font-family:'DM Mono',monospace;font-size:.7rem;padding:6px 10px;border-radius:6px;outline:none;">
-          <button onclick="saveScriptUrl()" style="padding:6px 14px;border-radius:6px;background:var(--gold);color:#000;font-family:'Sora',sans-serif;font-size:.72rem;font-weight:800;cursor:pointer;border:none;white-space:nowrap;">💾 Conectar</button>
-          <span id="scriptStatus" style="font-size:.68rem;color:var(--tm);font-family:'DM Mono',monospace;"></span>
-        </div>
-        <div style="margin-top:6px;font-size:.62rem;color:var(--td);">
-          Sigue las instrucciones del archivo <strong style="color:var(--text);">KAMIKAZE_ImageScript.js</strong> y pega aquí la URL para ver las fotos.
-        </div>
-      </div>
-      <div class="gal-body">
-        <div class="gal-filters">
-          <select class="gal-sel" id="galTienda" onchange="filterGallery()"><option value="">🏪 Todas las Tiendas</option></select>
-          <input type="text" class="gal-search" id="galSearch" placeholder="🔍  Buscar por tienda o mercaderista..." oninput="filterGallery()">
-          <span class="gal-count" id="galCount"></span>
-        </div>
-        <div id="galGrid">
-          <div class="gno-img">📭 Cargando imágenes...</div>
-        </div>
-      </div>
-    </div>
-
     <!-- ── ANÁLISIS ADICIONAL ── -->
     <div class="sec-div"><span class="sec-ttl">🔬 Análisis Adicional</span></div>
     <div class="addgrid">
@@ -440,6 +412,34 @@ footer{position:relative;z-index:1;text-align:center;padding:14px;font-family:'D
       <div class="wgrid">
         <div class="wcard"><div class="wic">🎁</div><div><div class="wpos">Posiciones 1 – 90</div><div class="wpriz">₡50.000</div><div class="wdesc">Tarjeta de regalo Walmart</div></div></div>
         <div class="wcard"><div class="wic">🧺</div><div><div class="wpos">Posiciones 91 – 120</div><div class="wpriz">₡25.000</div><div class="wdesc">Canasta productos Dos Pinos</div></div></div>
+      </div>
+    </div>
+
+    <!-- ── GALERÍA ── -->
+    <div class="sec-div"><span class="sec-ttl">📸 Galería de Evidencias — Antes &amp; Después</span><button onclick="document.getElementById('scriptSetup').style.display=document.getElementById('scriptSetup').style.display==='none'?'block':'none'" style="margin-left:12px;padding:3px 10px;border-radius:5px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--gold);font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;">⚙️ Config</button></div>
+    <div class="gallery-section">
+      <!-- SCRIPT URL SETUP -->
+      <div id="scriptSetup" style="padding:14px 16px;border-bottom:1px solid var(--br);background:rgba(245,158,11,.05);display:none;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:.68rem;font-weight:700;color:var(--gold);white-space:nowrap;">⚙️ Apps Script URL:</span>
+          <input id="scriptUrlInput" type="text" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbxD6Y1_jUZz3dlUdbnm_BMaw4tbYHqCiD0km8gEpMYYeqvgrENkCj7Xrlwn16uffum2/exec"
+            style="flex:1;min-width:240px;background:var(--s2);border:1px solid rgba(245,158,11,.3);color:var(--text);font-family:'DM Mono',monospace;font-size:.7rem;padding:6px 10px;border-radius:6px;outline:none;">
+          <button onclick="saveScriptUrl()" style="padding:6px 14px;border-radius:6px;background:var(--gold);color:#000;font-family:'Sora',sans-serif;font-size:.72rem;font-weight:800;cursor:pointer;border:none;white-space:nowrap;">💾 Conectar</button>
+          <span id="scriptStatus" style="font-size:.68rem;color:var(--tm);font-family:'DM Mono',monospace;"></span>
+        </div>
+        <div style="margin-top:6px;font-size:.62rem;color:var(--td);">
+          Sigue las instrucciones del archivo <strong style="color:var(--text);">KAMIKAZE_ImageScript.js</strong> y pega aquí la URL para ver las fotos.
+        </div>
+      </div>
+      <div class="gal-body">
+        <div class="gal-filters">
+          <select class="gal-sel" id="galTienda" onchange="filterGallery()"><option value="">🏪 Todas las Tiendas</option></select>
+          <input type="text" class="gal-search" id="galSearch" placeholder="🔍  Buscar por tienda o mercaderista..." oninput="filterGallery()">
+          <span class="gal-count" id="galCount"></span>
+        </div>
+        <div id="galGrid">
+          <div class="gno-img">📭 Cargando imágenes...</div>
+        </div>
       </div>
     </div>
 
