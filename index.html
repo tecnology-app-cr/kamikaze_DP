@@ -383,8 +383,21 @@ footer{position:relative;z-index:1;text-align:center;padding:14px;font-family:'D
     </div>
 
     <!-- ── GALERÍA ── -->
-    <div class="sec-div"><span class="sec-ttl">📸 Galería de Evidencias — Antes & Después</span></div>
+    <div class="sec-div"><span class="sec-ttl">📸 Galería de Evidencias — Antes &amp; Después</span><button onclick="document.getElementById('scriptSetup').style.display=document.getElementById('scriptSetup').style.display==='none'?'block':'none'" style="margin-left:12px;padding:3px 10px;border-radius:5px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--gold);font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;">⚙️ Config</button></div>
     <div class="gallery-section">
+      <!-- SCRIPT URL SETUP -->
+      <div id="scriptSetup" style="padding:14px 16px;border-bottom:1px solid var(--br);background:rgba(245,158,11,.05);display:none;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:.68rem;font-weight:700;color:var(--gold);white-space:nowrap;">⚙️ Apps Script URL:</span>
+          <input id="scriptUrlInput" type="text" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbxD6Y1_jUZz3dlUdbnm_BMaw4tbYHqCiD0km8gEpMYYeqvgrENkCj7Xrlwn16uffum2/exec"
+            style="flex:1;min-width:240px;background:var(--s2);border:1px solid rgba(245,158,11,.3);color:var(--text);font-family:'DM Mono',monospace;font-size:.7rem;padding:6px 10px;border-radius:6px;outline:none;">
+          <button onclick="saveScriptUrl()" style="padding:6px 14px;border-radius:6px;background:var(--gold);color:#000;font-family:'Sora',sans-serif;font-size:.72rem;font-weight:800;cursor:pointer;border:none;white-space:nowrap;">💾 Conectar</button>
+          <span id="scriptStatus" style="font-size:.68rem;color:var(--tm);font-family:'DM Mono',monospace;"></span>
+        </div>
+        <div style="margin-top:6px;font-size:.62rem;color:var(--td);">
+          Sigue las instrucciones del archivo <strong style="color:var(--text);">KAMIKAZE_ImageScript.js</strong> y pega aquí la URL para ver las fotos.
+        </div>
+      </div>
       <div class="gal-body">
         <div class="gal-filters">
           <select class="gal-sel" id="galTienda" onchange="filterGallery()"><option value="">🏪 Todas las Tiendas</option></select>
@@ -466,6 +479,9 @@ footer{position:relative;z-index:1;text-align:center;padding:14px;font-family:'D
 <script>
 // ═══════════════════════════════════════════════════════════ CONFIG
 const SHEET_ID = '16kDKYYjPiRZqrfwDvpo3XM3PFMs4X2XpWDCieuRU44o';
+// ← Pega aquí la URL de tu Apps Script desplegado
+let APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxD6Y1_jUZz3dlUdbnm_BMaw4tbYHqCiD0km8gEpMYYeqvgrENkCj7Xrlwn16uffum2/exec';
+let driveMap = {};   // filename → {id, thumb, full}
 const GID = '917931316';
 
 // Columnas 0-based (se auto-detectan también del header)
@@ -583,6 +599,7 @@ async function loadData() {
     applyFilters();
     document.getElementById('upd').textContent='Act: '+new Date().toLocaleTimeString('es-CR');
     hide('ldwrap'); show('mainContent'); show('sbar');
+    loadDriveMap();
     schedAR();
   } catch(e) {
     hide('ldwrap'); show('errwrap');
@@ -819,68 +836,73 @@ function renderCharts(){
 }
 
 // ═══════════════════════════════════════════════════════════ GALLERY
-// Extract Google Drive file ID from any Drive URL format
-function driveId(url){
-  if(!url||typeof url!=='string') return null;
-  url=url.trim();
-  if(!url.startsWith('http')) return null;
-  let m;
-  // Forms upload: https://drive.google.com/open?id=XXX
-  if((m=url.match(/[?&]id=([a-zA-Z0-9_-]{20,})/))) return m[1];
-  // File view: https://drive.google.com/file/d/XXX/view
-  if((m=url.match(/\/d\/([a-zA-Z0-9_-]{20,})/))) return m[1];
-  // uc?id= format
-  if((m=url.match(/uc\?.*id=([a-zA-Z0-9_-]{20,})/))) return m[1];
-  return null;
+
+// ── Apps Script integration ────────────────────────────────────────────────
+function saveScriptUrl(){
+  const url=(g('scriptUrlInput').value||'').trim();
+  if(!url){setScriptStatus('⚠️ Pega la URL primero','#f59e0b');return;}
+  APPS_SCRIPT_URL=url;
+  try{localStorage.setItem('kamikazeScriptUrl',url);}catch(e){}
+  loadDriveMap();
 }
 
-// Build multiple fallback src URLs for a Drive file
-function driveUrls(url){
-  const id = driveId(url);
-  if(!id) return null;
-  return {
-    // Primary: lh3 CDN (fastest, no CORS)
-    thumb: `https://lh3.googleusercontent.com/d/${id}=w480-h360-p`,
-    full:  `https://lh3.googleusercontent.com/d/${id}=w1200`,
-    // Fallback: thumbnail endpoint
-    thumb2:`https://drive.google.com/thumbnail?id=${id}&sz=w480`,
-    full2: `https://drive.google.com/thumbnail?id=${id}&sz=w1200`,
-  };
+function loadDriveMap(){
+  if(!APPS_SCRIPT_URL){
+    const saved=localStorage.getItem('kamikazeScriptUrl')||'';
+    if(saved){APPS_SCRIPT_URL=saved;const el=g('scriptUrlInput');if(el&&!el.value)el.value=saved;}
+    else return;
+  }
+  setScriptStatus('⏳ Cargando mapa de imágenes...','#94a3b8');
+  fetch(APPS_SCRIPT_URL)
+    .then(r=>r.json())
+    .then(d=>{
+      if(!d.ok){setScriptStatus('❌ Error: '+d.error,'#ef4444');return;}
+      driveMap=d.files||{};
+      const n=Object.keys(driveMap).length;
+      setScriptStatus('✅ '+n+' imágenes conectadas','#22c55e');
+      renderGallery();
+    })
+    .catch(err=>setScriptStatus('❌ No se pudo conectar','#ef4444'));
 }
 
-// Build an <img> tag with auto-fallback chain
-function buildImg(url, label, idx, side){
-  const u = driveUrls(url);
-  if(!u) return `<div class="no-foto">${label} Sin foto</div>`;
-  // We try: lh3 thumb → drive thumbnail → show error
-  return `<img
-    src="${u.thumb}"
-    data-full="${u.full}"
-    data-thumb2="${u.thumb2}"
-    data-full2="${u.full2}"
-    data-tried="0"
-    alt="${label}"
+function setScriptStatus(msg,color){
+  const el=g('scriptStatus');if(el){el.textContent=msg;el.style.color=color;}
+}
+
+// Extract just the filename from path like "Folder/hash.NAME.id.jpg"
+function extractFilename(cellValue){
+  if(!cellValue||typeof cellValue!=='string') return null;
+  const v=cellValue.trim();
+  if(!v) return null;
+  // If it contains a slash, take the part after the last slash
+  const parts=v.split('/');
+  return parts[parts.length-1].trim();
+}
+
+// Get image URLs from driveMap using the filename
+function getImgUrls(cellValue){
+  const fname=extractFilename(cellValue);
+  if(!fname) return null;
+  const entry=driveMap[fname];
+  if(!entry) return null;
+  return {thumb:entry.thumb, full:entry.full};
+}
+
+// Build <img> with fallback placeholder
+function makeImg(cellValue, altLabel){
+  const urls=getImgUrls(cellValue);
+  if(!urls){
+    if(cellValue&&cellValue.trim()){
+      return `<div class="no-foto" style="font-size:.6rem;padding:10px;">${altLabel}<br><span style="opacity:.4;font-size:.55rem;word-break:break-all;">${(cellValue||'').slice(0,50)}</span></div>`;
+    }
+    return `<div class="no-foto">${altLabel}</div>`;
+  }
+  return `<img src="${urls.thumb}" data-full="${urls.full}" alt="${altLabel}"
     class="loading"
     onload="this.classList.remove('loading')"
-    onerror="imgFallback(this)"
+    onerror="this.insertAdjacentHTML('afterend','<div class=\\'no-foto\\'>📷 Sin acceso</div>');this.remove();"
     style="width:100%;height:100%;object-fit:cover;display:block;">`;
 }
-
-// Progressive fallback: lh3 thumb → drive thumb → give up
-function imgFallback(img){
-  const tried = parseInt(img.dataset.tried||'0');
-  if(tried===0){
-    img.dataset.tried='1';
-    img.src=img.dataset.thumb2;
-  } else {
-    img.style.display='none';
-    const div=document.createElement('div');
-    div.className='no-foto';
-    div.textContent='📷 Sin imagen';
-    img.parentElement.appendChild(div);
-  }
-}
-window.imgFallback=imgFallback;
 
 function renderGallery(){
   galItems=[];
@@ -889,16 +911,15 @@ function renderGallery(){
   const tiendas=new Set();
 
   for(const r of filt){
-    const ua=driveUrls(r[C.IMG_A]);
-    const ud=driveUrls(r[C.IMG_D]);
+    const rawA=(r[C.IMG_A]||'').trim();
+    const rawB=(r[C.IMG_D]||'').trim();
     const name=(r[C.ALIAS]||'').trim();
     const merc=(r[C.MERC]||'').trim();
-    if(!ua&&!ud) continue;
+    // Include record if it has ANY image cell filled
+    if(!rawA&&!rawB) continue;
     if(name) tiendas.add(name);
     galItems.push({
-      urlA: ua, urlD: ud,
-      rawA: r[C.IMG_A]||'', rawD: r[C.IMG_D]||'',
-      name, merc,
+      rawA, rawD:rawB, name, merc,
       sup:(r[C.SUPERVISOR]||'').trim(),
       of:(r[C.OFICINA]||'').trim(),
       tipo:(r[C.TIPO]||'').trim(),
@@ -908,7 +929,7 @@ function renderGallery(){
 
   // Populate tienda dropdown
   if(tiendaSel){
-    tiendaSel.innerHTML='<option value="">🏪 Todas las Tiendas</option>';
+    tiendaSel.innerHTML='<option value="">🏪 Todas las Tiendas ('+tiendas.size+')</option>';
     [...tiendas].sort().forEach(t=>{
       const o=document.createElement('option');
       o.value=o.textContent=t;
@@ -921,13 +942,11 @@ function renderGallery(){
 
 function filterGallery(){
   const q=(g('galSearch').value||'').toLowerCase().trim();
-  const tiendaF=(g('galTienda')?g('galTienda').value:'').trim();
+  const tf=(g('galTienda')?g('galTienda').value:'').trim();
+
   const items=galItems.filter(x=>{
-    if(tiendaF && x.name!==tiendaF) return false;
-    if(q && !x.name.toLowerCase().includes(q)
-         && !x.merc.toLowerCase().includes(q)
-         && !x.of.toLowerCase().includes(q)
-         && !x.tipo.toLowerCase().includes(q)) return false;
+    if(tf&&x.name!==tf) return false;
+    if(q&&!x.name.toLowerCase().includes(q)&&!x.merc.toLowerCase().includes(q)&&!x.of.toLowerCase().includes(q)) return false;
     return true;
   });
 
@@ -935,36 +954,37 @@ function filterGallery(){
   if(cnt) cnt.textContent=items.length+' registros';
 
   const grid=g('galGrid');
+
   if(!items.length){
     grid.className='';
-    grid.innerHTML='<div class="gno-img">'+(galItems.length?'📭 Sin coincidencias para este filtro':'📭 No hay imágenes registradas en estos datos. Verifica que las columnas M y N tengan URLs de Google Drive.')+'</div>';
+    const noScript=!APPS_SCRIPT_URL;
+    grid.innerHTML='<div class="gno-img">'
+      +(galItems.length===0&&noScript
+        ?'📸 Conecta el Apps Script arriba para ver las imágenes'
+        :galItems.length===0
+        ?'📭 No hay registros con imágenes en este filtro'
+        :'📭 Sin coincidencias para este filtro')
+      +'</div>';
     galItems._filtered=[];
     return;
   }
 
   grid.className='pair-grid';
   grid.innerHTML=items.map((x,i)=>{
-    const hasA=!!x.urlA, hasD=!!x.urlD;
-    const imgA=hasA
-      ? buildImg(x.rawA,'📷',i,'A')
-      : '<div class="no-foto">📷 Sin foto antes</div>';
-    const imgD=hasD
-      ? buildImg(x.rawD,'✅',i,'D')
-      : '<div class="no-foto">✅ Sin foto después</div>';
-
+    const hasDriveMap=Object.keys(driveMap).length>0;
+    const imgA=makeImg(x.rawA,'📷 Sin foto antes');
+    const imgD=makeImg(x.rawD,'✅ Sin foto después');
     return '<div class="pair-card">'
       +'<div class="pair-info">'
         +'<div class="pair-name">🏪 '+e(x.name)+'</div>'
-        +'<div class="pair-meta">👤 '+e(x.merc)+(x.of?' &nbsp;·&nbsp; 🗺️ '+e(x.of):'')+(x.tipo?' &nbsp;·&nbsp; '+e(x.tipo):'')+(x.cat?' &nbsp;·&nbsp; '+e(x.cat):'')+'</div>'
+        +'<div class="pair-meta">👤 '+e(x.merc)+(x.of?' &nbsp;·&nbsp; 🗺️ '+e(x.of):'')+(x.tipo?' &nbsp;·&nbsp; '+e(x.tipo):'')+'</div>'
       +'</div>'
       +'<div class="pair-imgs">'
-        +'<div class="pair-img-wrap" onclick="openLB('+i+',\'A\')" title="Ampliar — Antes">'
-          +'<span class="pair-badge badge-antes">📷 Antes</span>'
-          +imgA
+        +'<div class="pair-img-wrap" onclick="openLB('+i+')" title="Ver antes">'
+          +'<span class="pair-badge badge-antes">📷 Antes</span>'+imgA
         +'</div>'
-        +'<div class="pair-img-wrap" onclick="openLB('+i+',\'D\')" title="Ampliar — Después">'
-          +'<span class="pair-badge badge-desp">✅ Después</span>'
-          +imgD
+        +'<div class="pair-img-wrap" onclick="openLB('+i+')" title="Ver después">'
+          +'<span class="pair-badge badge-desp">✅ Después</span>'+imgD
         +'</div>'
       +'</div>'
     +'</div>';
@@ -972,35 +992,21 @@ function filterGallery(){
   galItems._filtered=items;
 }
 
-function openLB(i, side){
+function openLB(i){
   const items=galItems._filtered||galItems;
-  galIdx=i;
-  const x=items[i];
+  galIdx=i; const x=items[i];
+  const imgA=g('lbImgA'),imgD=g('lbImgD'),noA=g('lbNoA'),noD=g('lbNoD');
 
-  const imgA=g('lbImgA'); const imgD=g('lbImgD');
-  const noA=g('lbNoA');   const noD=g('lbNoD');
-
-  if(x.urlA){
-    imgA.src=x.urlA.full;
-    imgA.dataset.thumb2=x.urlA.full2;
-    imgA.dataset.tried='0';
-    imgA.onerror=function(){if(this.dataset.tried==='0'){this.dataset.tried='1';this.src=this.dataset.thumb2;}else{this.style.display='none';noA.style.display='flex';}};
-    imgA.style.display='';noA.style.display='none';
-  } else {
-    imgA.style.display='none';noA.style.display='flex';
+  function setLb(el,noEl,rawVal){
+    const urls=getImgUrls(rawVal);
+    if(urls){el.src=urls.full;el.style.display='';noEl.style.display='none';
+      el.onerror=function(){this.style.display='none';noEl.style.display='flex';};
+    }else{el.style.display='none';noEl.style.display='flex';}
   }
-  if(x.urlD){
-    imgD.src=x.urlD.full;
-    imgD.dataset.thumb2=x.urlD.full2;
-    imgD.dataset.tried='0';
-    imgD.onerror=function(){if(this.dataset.tried==='0'){this.dataset.tried='1';this.src=this.dataset.thumb2;}else{this.style.display='none';noD.style.display='flex';}};
-    imgD.style.display='';noD.style.display='none';
-  } else {
-    imgD.style.display='none';noD.style.display='flex';
-  }
-
+  setLb(imgA,noA,x.rawA);
+  setLb(imgD,noD,x.rawD);
   g('lbName').textContent='🏪 '+x.name;
-  g('lbMeta').textContent='👤 '+x.merc+(x.of?' · 🗺️ '+x.of:'')+(x.tipo?' · '+x.tipo:'');
+  g('lbMeta').textContent='👤 '+x.merc+(x.of?' · '+x.of:'')+(x.tipo?' · '+x.tipo:'');
   g('lbCount').textContent=(i+1)+' / '+items.length;
   g('lb').classList.add('open');
 }
