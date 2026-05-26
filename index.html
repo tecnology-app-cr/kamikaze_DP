@@ -114,9 +114,8 @@ table.rkt td.r{text-align:right;}
 .p25k{background:rgba(107,114,128,.14);color:#d1d5db;border:1px solid rgba(107,114,128,.3);}
 
 /* ANALYSIS GRID */
-.agrid{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:16px;}
-@media(max-width:1200px){.agrid{grid-template-columns:1fr 1fr;}}
-@media(max-width:760px){.agrid{grid-template-columns:1fr;}}
+.agrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start;}
+@media(max-width:1100px){.agrid{grid-template-columns:1fr;}}
 .achart{background:var(--s1);border:1px solid var(--br);border-radius:13px;overflow:hidden;}
 .achart.wide{grid-column:span 1;}
 .ach-head{padding:11px 15px;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:7px;}
@@ -133,22 +132,27 @@ table.rkt td.r{text-align:right;}
 
 /* IMAGE GALLERY */
 .gallery-section{background:var(--s1);border:1px solid var(--br);border-radius:13px;overflow:hidden;}
-.gal-tabs{display:flex;border-bottom:1px solid var(--br);}
-.gtab{flex:1;padding:11px 16px;cursor:pointer;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-align:center;color:var(--tm);transition:.18s;border-bottom:2px solid transparent;}
-.gtab.active{color:var(--redb);border-bottom-color:var(--red);}
-.gtab:hover:not(.active){color:var(--text);}
 .gal-body{padding:16px;}
 .gal-search{width:100%;background:var(--s2);border:1px solid var(--br);color:var(--text);font-family:'Sora',sans-serif;font-size:.76rem;padding:7px 12px;border-radius:7px;outline:none;margin-bottom:14px;transition:.18s;}
 .gal-search:focus{border-color:rgba(220,38,38,.45);}
-.gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
-.gitem{position:relative;border-radius:8px;overflow:hidden;cursor:pointer;aspect-ratio:4/3;background:var(--s2);border:1px solid var(--br);transition:transform .18s,box-shadow .18s;}
-.gitem:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.5),var(--gr);}
-.gitem img{width:100%;height:100%;object-fit:cover;transition:opacity .3s;}
-.gitem img.loading{opacity:.3;}
-.gitem-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.85));padding:6px 8px;}
-.gitem-name{font-size:.6rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.gitem-merc{font-size:.55rem;color:rgba(255,255,255,.65);}
-.gno-img{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:30px;color:var(--tm);font-size:.8rem;}
+/* PAIR CARDS */
+.pair-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;}
+.pair-card{background:var(--s2);border:1px solid var(--br);border-radius:12px;overflow:hidden;transition:box-shadow .18s;}
+.pair-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.5),var(--gr);}
+.pair-info{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.05);}
+.pair-name{font-weight:700;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pair-meta{font-size:.65rem;color:var(--tm);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pair-imgs{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.pair-img-wrap{position:relative;aspect-ratio:4/3;background:var(--s3);cursor:pointer;overflow:hidden;}
+.pair-img-wrap:first-child{border-right:1px solid rgba(255,255,255,.06);}
+.pair-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .22s,opacity .3s;}
+.pair-img-wrap:hover img{transform:scale(1.04);}
+.pair-img-wrap img.loading{opacity:.25;}
+.pair-badge{position:absolute;top:6px;left:6px;padding:2px 8px;border-radius:4px;font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;}
+.badge-antes{background:rgba(220,38,38,.75);color:#fff;}
+.badge-desp{background:rgba(34,197,94,.75);color:#fff;}
+.pair-img-wrap .no-foto{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:4px;color:var(--td);font-size:.7rem;}
+.gno-img{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:40px;color:var(--tm);font-size:.82rem;}
 
 /* LIGHTBOX */
 .lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
@@ -169,14 +173,14 @@ table.rkt td.r{text-align:right;}
 .tbl-card{background:var(--s1);border:1px solid var(--br);border-radius:13px;overflow:hidden;}
 .tbl-head{padding:11px 15px;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:7px;}
 .tbl-icon{font-size:1.1rem;}.tbl-title{font-size:.67rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--redb);}
-.tbl-scroll{overflow:auto;max-height:320px;}
-.tbl-scroll::-webkit-scrollbar{width:3px;height:3px;}
+.tbl-scroll{overflow-x:hidden;overflow-y:auto;max-height:320px;}
+.tbl-scroll::-webkit-scrollbar{width:3px;}
 .tbl-scroll::-webkit-scrollbar-thumb{background:rgba(220,38,38,.3);border-radius:2px;}
-table.at{width:100%;border-collapse:collapse;font-size:.74rem;}
+table.at{width:100%;table-layout:auto;border-collapse:collapse;font-size:.76rem;}
 table.at thead tr{background:var(--s2);position:sticky;top:0;z-index:1;}
-table.at th{padding:6px 11px;font-size:.57rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--tm);text-align:left;white-space:nowrap;}
+table.at th{padding:8px 13px;font-size:.59rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--tm);text-align:left;white-space:nowrap;}
 table.at th.r{text-align:right;}
-table.at td{padding:6px 11px;border-bottom:1px solid rgba(255,255,255,.03);}
+table.at td{padding:8px 13px;border-bottom:1px solid rgba(255,255,255,.03);white-space:nowrap;}
 table.at td.r{text-align:right;font-family:'DM Mono',monospace;}
 table.at tbody tr:hover{background:rgba(255,255,255,.025);}
 .tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:.58rem;font-weight:700;border:1px solid;}
@@ -296,43 +300,90 @@ footer{position:relative;z-index:1;text-align:center;padding:14px;font-family:'D
     <!-- ── ANÁLISIS ── -->
     <div class="sec-div"><span class="sec-ttl">📊 Análisis de Espacios</span></div>
     <div class="agrid">
-      <!-- PIE CATEGORÍA -->
+      <!-- TABLA CATEGORÍA -->
       <div class="achart">
         <div class="ach-head"><span class="ach-icon">🏷️</span><span class="ach-title">Por Categoría</span><span class="ach-sub" id="totCat"></span></div>
-        <div class="ach-body"><div class="chart-wrap"><canvas id="chCat"></canvas></div></div>
+        <div class="ach-body" style="padding:0;">
+          <div class="tbl-scroll">
+            <table class="at" id="tblCat">
+              <thead><tr>
+                <th style="width:28px">#</th>
+                <th style="min-width:90px;">Categoría</th>
+                <th class="r" style="white-space:nowrap;">Cantidad</th>
+                <th class="r" style="white-space:nowrap;">Puntos</th>
+                <th class="r" style="white-space:nowrap;">% Part.</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <!-- PIE TIPO -->
+      <!-- TABLA TIPO ESPACIO -->
       <div class="achart">
         <div class="ach-head"><span class="ach-icon">📦</span><span class="ach-title">Por Tipo de Espacio</span><span class="ach-sub" id="totTipo"></span></div>
-        <div class="ach-body"><div class="chart-wrap"><canvas id="chTipo"></canvas></div></div>
+        <div class="ach-body" style="padding:0;">
+          <div class="tbl-scroll">
+            <table class="at" id="tblTipo">
+              <thead><tr>
+                <th style="width:28px">#</th>
+                <th style="min-width:110px;">Tipo Espacio</th>
+                <th class="r" style="white-space:nowrap;">Cantidad</th>
+                <th class="r" style="white-space:nowrap;">Puntos</th>
+                <th class="r" style="white-space:nowrap;">% Part.</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <!-- TOP TIENDAS -->
+      <!-- TABLA TOP TIENDAS -->
       <div class="achart">
-        <div class="ach-head"><span class="ach-icon">🏪</span><span class="ach-title">Top 12 Tiendas — Puntos</span></div>
-        <div class="ach-body" style="padding:10px 10px 14px;"><div style="position:relative;height:260px;"><canvas id="chTiendas"></canvas></div></div>
+        <div class="ach-head"><span class="ach-icon">🏪</span><span class="ach-title">Top Tiendas</span><span class="ach-sub" id="totTiendas"></span></div>
+        <div class="ach-body" style="padding:0;">
+          <div class="tbl-scroll">
+            <table class="at" id="tblTiendas2">
+              <thead><tr>
+                <th style="width:28px">#</th>
+                <th style="min-width:120px;">Tienda</th>
+                <th class="r" style="white-space:nowrap;">Cantidad</th>
+                <th class="r" style="white-space:nowrap;">Puntos</th>
+                <th class="r" style="white-space:nowrap;">% Part.</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- SEGUNDA FILA ANÁLISIS -->
+    <!-- TABLA OFICINA -->
     <div style="margin-top:16px;">
-      <div class="obargrid">
-        <div class="achart obar-full">
-          <div class="ach-head"><span class="ach-icon">🗺️</span><span class="ach-title">Puntos por Oficina / Zona</span></div>
-          <div class="ach-body" style="padding:10px 10px 14px;"><div style="position:relative;height:180px;"><canvas id="chOf"></canvas></div></div>
+      <div class="achart">
+        <div class="ach-head"><span class="ach-icon">🗺️</span><span class="ach-title">Puntos y Espacios por Oficina / Zona</span><span class="ach-sub" id="totOf"></span></div>
+        <div class="ach-body" style="padding:0;">
+          <div class="tbl-scroll">
+            <table class="at" id="tblOf">
+              <thead><tr>
+                <th style="width:28px">#</th>
+                <th style="min-width:120px;">Oficina / Zona</th>
+                <th class="r" style="white-space:nowrap;">Espacios</th>
+                <th class="r" style="white-space:nowrap;">Puntos</th>
+                <th class="r" style="white-space:nowrap;">% Espacios</th>
+                <th class="r" style="white-space:nowrap;">% Puntos</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- ── GALERÍA ── -->
-    <div class="sec-div"><span class="sec-ttl">📸 Galería de Evidencias</span></div>
+    <div class="sec-div"><span class="sec-ttl">📸 Galería de Evidencias — Antes & Después</span></div>
     <div class="gallery-section">
-      <div class="gal-tabs">
-        <div class="gtab active" id="tabAntes" onclick="switchTab('antes')">📷 Antes del Espacio</div>
-        <div class="gtab" id="tabDesp" onclick="switchTab('despues')">✅ Espacio Colocado</div>
-      </div>
       <div class="gal-body">
-        <input type="text" class="gal-search" id="galSearch" placeholder="🔍  Buscar por tienda o mercaderista..." oninput="filterGallery()">
-        <div class="gal-grid" id="galGrid">
+        <input type="text" class="gal-search" id="galSearch" placeholder="🔍  Buscar por tienda, mercaderista u oficina..." oninput="filterGallery()">
+        <div id="galGrid">
           <div class="gno-img">📭 Cargando imágenes...</div>
         </div>
       </div>
@@ -377,11 +428,26 @@ footer{position:relative;z-index:1;text-align:center;padding:14px;font-family:'D
 <!-- LIGHTBOX -->
 <div class="lb" id="lb">
   <button class="lb-close" onclick="closeLB()">✕</button>
-  <div class="lb-inner">
-    <img class="lb-img" id="lbImg" src="" alt="">
-    <div class="lb-info"><div class="lb-name" id="lbName"></div><div class="lb-meta" id="lbMeta"></div></div>
+  <div class="lb-inner" style="max-width:95vw;">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:flex-start;">
+      <div style="text-align:center;">
+        <div style="font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px;">📷 ANTES</div>
+        <img class="lb-img" id="lbImgA" src="" alt="" style="max-height:70vh;max-width:44vw;border-radius:8px;border:1px solid rgba(220,38,38,.3);">
+        <div id="lbNoA" style="display:none;width:200px;height:150px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--tm);font-size:.8rem;border:1px dashed var(--br);">Sin foto</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#22c55e;margin-bottom:6px;">✅ DESPUÉS</div>
+        <img class="lb-img" id="lbImgD" src="" alt="" style="max-height:70vh;max-width:44vw;border-radius:8px;border:1px solid rgba(34,197,94,.3);">
+        <div id="lbNoD" style="display:none;width:200px;height:150px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--tm);font-size:.8rem;border:1px dashed var(--br);">Sin foto</div>
+      </div>
+    </div>
+    <div class="lb-info" style="text-align:center;margin-top:8px;">
+      <div class="lb-name" id="lbName"></div>
+      <div class="lb-meta" id="lbMeta"></div>
+    </div>
     <div class="lb-nav">
       <button class="lb-btn" onclick="lbNav(-1)">◀ Anterior</button>
+      <span id="lbCount" style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--tm);align-self:center;"></span>
       <button class="lb-btn" onclick="lbNav(1)">Siguiente ▶</button>
     </div>
   </div>
@@ -634,101 +700,196 @@ function mkChart(id,type,labels,data,opts={}){
   });
 }
 
+// Tabla estadística: cantidad, puntos, % participación
+function renderStatTable(tableId, countArr, ptsMap, totN, totP) {
+  const tbody = g(tableId).querySelector('tbody');
+  if (!countArr.length) {
+    tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--tm);font-size:.78rem;">Sin datos</td></tr>';
+    return;
+  }
+  const maxN = countArr[0].v || 1;
+  tbody.innerHTML = countArr.map(({k,v}, i)=>{
+    const p   = ptsMap[k] || 0;
+    const pct = totN > 0 ? (v/totN*100).toFixed(1) : '0.0';
+    const barW= Math.round(v/maxN*100);
+    // color badge por posición
+    const dot = i===0?'#f59e0b': i===1?'#9ca3af': i===2?'#b45309':'#3b82f6';
+    return `<tr>
+      <td style="color:var(--td);font-family:'DM Mono',monospace;font-size:.68rem;">${i+1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:7px;white-space:nowrap;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${dot};flex-shrink:0;box-shadow:0 0 4px ${dot}66;"></span>
+          <span style="font-weight:600;font-size:.76rem;overflow:hidden;text-overflow:ellipsis;max-width:160px;display:inline-block;">${e(k)}</span>
+        </div>
+        <div style="margin-top:3px;height:2px;background:rgba(255,255,255,.06);border-radius:1px;overflow:hidden;min-width:60px;">
+          <div style="height:100%;width:${barW}%;background:linear-gradient(90deg,${dot},${dot}88);border-radius:1px;"></div>
+        </div>
+      </td>
+      <td class="r" style="font-family:'DM Mono',monospace;font-weight:700;">${v.toLocaleString('es-CR')}</td>
+      <td class="r" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">${p.toLocaleString('es-CR',{maximumFractionDigits:0})}</td>
+      <td class="r">
+        <span style="display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;">
+          <span style="font-family:'DM Mono',monospace;font-size:.78rem;font-weight:700;color:var(--redb);">${pct}%</span>
+        </span>
+      </td>
+    </tr>`;
+  }).join('') + `<tr style="border-top:1px solid rgba(220,38,38,.2);background:var(--s2);">
+    <td colspan="2" style="padding:7px 11px;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tm);">TOTAL</td>
+    <td class="r" style="font-family:'DM Mono',monospace;font-weight:800;color:var(--text);">${totN.toLocaleString('es-CR')}</td>
+    <td class="r" style="font-family:'DM Mono',monospace;font-weight:800;color:var(--gold);">${totP.toLocaleString('es-CR',{maximumFractionDigits:0})}</td>
+    <td class="r" style="font-family:'DM Mono',monospace;font-weight:800;color:var(--redb);">100%</td>
+  </tr>`;
+}
+
 function renderCharts(){
-  // PIE Categoría
+  // TABLA Categoría
   const cat=countBy(C.CATEGORIA);
-  g('totCat').textContent=cat.length+' categorías';
-  mkChart('chCat','doughnut',cat.map(x=>x.k),cat.map(x=>x.v));
+  const catPts={}; for(const r of filt){const k=(r[C.CATEGORIA]||'').trim();if(k)catPts[k]=(catPts[k]||0)+pts(r);}
+  const catTotN=cat.reduce((s,x)=>s+x.v,0);
+  const catTotP=Object.values(catPts).reduce((s,v)=>s+v,0);
+  g('totCat').textContent=cat.length+' categorías · '+catTotN+' espacios';
+  renderStatTable('tblCat', cat, catPts, catTotN, catTotP);
 
-  // PIE Tipo Espacios
+  // TABLA Tipo Espacios
   const tip=countBy(C.TIPO);
-  g('totTipo').textContent=tip.length+' tipos';
-  mkChart('chTipo','doughnut',tip.map(x=>x.k),tip.map(x=>x.v));
+  const tipPts={}; for(const r of filt){const k=(r[C.TIPO]||'').trim();if(k)tipPts[k]=(tipPts[k]||0)+pts(r);}
+  const tipTotN=tip.reduce((s,x)=>s+x.v,0);
+  const tipTotP=Object.values(tipPts).reduce((s,v)=>s+v,0);
+  g('totTipo').textContent=tip.length+' tipos · '+tipTotN+' espacios';
+  renderStatTable('tblTipo', tip, tipPts, tipTotN, tipTotP);
 
-  // BAR Top Tiendas
-  const tiendas=groupBy(C.ALIAS).slice(0,12);
-  const cv3=document.getElementById('chTiendas');
-  if(charts.chTiendas)charts.chTiendas.destroy();
-  charts.chTiendas=new Chart(cv3,{
-    type:'bar',
-    data:{labels:tiendas.map(x=>x.k.length>18?x.k.slice(0,17)+'…':x.k),
-          datasets:[{label:'Puntos',data:tiendas.map(x=>x.v),
-            backgroundColor:tiendas.map((_,i)=>`hsla(${220+i*12},70%,55%,.75)`),
-            borderRadius:4,borderWidth:0}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},
-               tooltip:{callbacks:{label:c=>` ${c.raw.toLocaleString('es-CR')} pts`}}},
-      scales:{x:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}},
-               y:{ticks:{color:'#94a3b8',font:{size:9}},grid:{display:false}}}}
-  });
+  // TABLA Top Tiendas
+  const tiendas=groupBy(C.ALIAS);
+  const tiendaN={}; for(const r of filt){const k=(r[C.ALIAS]||'').trim();if(k)tiendaN[k]=(tiendaN[k]||0)+1;}
+  const tiendaTotN=Object.values(tiendaN).reduce((s,v)=>s+v,0);
+  const tiendaTotP=tiendas.reduce((s,x)=>s+x.v,0);
+  g('totTiendas').textContent=tiendas.length+' tiendas';
+  const tiendaCountArr=tiendas.map(x=>({k:x.k,v:tiendaN[x.k]||0}));
+  const tiendaPtsMap=Object.fromEntries(tiendas.map(x=>[x.k,x.v]));
+  renderStatTable('tblTiendas2', tiendaCountArr, tiendaPtsMap, tiendaTotN, tiendaTotP);
 
-  // BAR Oficina
-  const ofs=groupBy(C.OFICINA);
-  const cv4=document.getElementById('chOf');
-  if(charts.chOf)charts.chOf.destroy();
-  charts.chOf=new Chart(cv4,{
-    type:'bar',
-    data:{labels:ofs.map(x=>x.k),
-          datasets:[{label:'Puntos',data:ofs.map(x=>x.v),
-            backgroundColor:CHART_COLORS.map(c=>c+'bb'),borderRadius:5,borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw.toLocaleString('es-CR')} pts`}}},
-      scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{display:false}},
-               y:{ticks:{color:'#64748b',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}}}}
-  });
+  // TABLA Oficina
+  const ofsP=groupBy(C.OFICINA);
+  const ofsN={}; for(const r of filt){const k=(r[C.OFICINA]||'').trim();if(k)ofsN[k]=(ofsN[k]||0)+1;}
+  const ofsTotN=Object.values(ofsN).reduce((s,v)=>s+v,0);
+  const ofsTotP=ofsP.reduce((s,x)=>s+x.v,0);
+  g('totOf').textContent=ofsP.length+' zonas · '+ofsTotN+' espacios';
+  const ofsCountArr=ofsP.map(x=>({k:x.k,v:ofsN[x.k]||0}));
+  const ofsPtsMap=Object.fromEntries(ofsP.map(x=>[x.k,x.v]));
+  // Render oficina table with extra % puntos column
+  const ofTbody=g('tblOf').querySelector('tbody');
+  if(!ofsP.length){ofTbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:18px;color:var(--tm);">Sin datos</td></tr>';}
+  else{
+    const maxN2=ofsCountArr[0]?ofsCountArr[0].v:1;
+    const DOTS=['#f59e0b','#9ca3af','#b45309','#3b82f6','#a855f7','#22c55e','#ec4899','#14b8a6'];
+    ofTbody.innerHTML=ofsCountArr.map(({k,v},i)=>{
+      const p=ofsPtsMap[k]||0;
+      const pctN=ofsTotN>0?(v/ofsTotN*100).toFixed(1):'0.0';
+      const pctP=ofsTotP>0?(p/ofsTotP*100).toFixed(1):'0.0';
+      const bw=Math.round(v/maxN2*100);
+      const dot=DOTS[i%DOTS.length];
+      return `<tr>
+        <td style="color:var(--td);font-family:'DM Mono',monospace;font-size:.68rem;">${i+1}</td>
+        <td><div style="display:flex;align-items:center;gap:7px;white-space:nowrap;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${dot};flex-shrink:0;box-shadow:0 0 4px ${dot}66;"></span>
+          <span style="font-weight:600;">${e(k)}</span></div>
+          <div style="margin-top:3px;height:2px;background:rgba(255,255,255,.06);border-radius:1px;overflow:hidden;min-width:60px;">
+            <div style="height:100%;width:${bw}%;background:linear-gradient(90deg,${dot},${dot}88);border-radius:1px;"></div></div></td>
+        <td class="r" style="font-family:'DM Mono',monospace;font-weight:700;white-space:nowrap;">${v.toLocaleString('es-CR')}</td>
+        <td class="r" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;white-space:nowrap;">${p.toLocaleString('es-CR',{maximumFractionDigits:0})}</td>
+        <td class="r" style="font-family:'DM Mono',monospace;color:var(--redb);font-weight:700;white-space:nowrap;">${pctN}%</td>
+        <td class="r" style="font-family:'DM Mono',monospace;color:var(--redb);font-weight:700;white-space:nowrap;">${pctP}%</td>
+      </tr>`;
+    }).join('')+`<tr style="border-top:1px solid rgba(220,38,38,.2);background:var(--s2);">
+      <td colspan="2" style="padding:7px 12px;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tm);">TOTAL</td>
+      <td class="r" style="font-family:'DM Mono',monospace;font-weight:800;">${ofsTotN.toLocaleString('es-CR')}</td>
+      <td class="r" style="font-family:'DM Mono',monospace;font-weight:800;color:var(--gold);">${ofsTotP.toLocaleString('es-CR',{maximumFractionDigits:0})}</td>
+      <td class="r" style="font-family:'DM Mono',monospace;font-weight:800;color:var(--redb);">100%</td>
+      <td class="r" style="font-family:'DM Mono',monospace;font-weight:800;color:var(--redb);">100%</td>
+    </tr>`;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════ GALLERY
 function toImgUrl(url){
-  if(!url||!url.trim().startsWith('http'))return null;
+  if(!url||typeof url!=='string')return null;
   url=url.trim();
-  let id=null, m;
+  if(!url.startsWith('http'))return null;
+  let id=null,m;
   if((m=url.match(/[?&]id=([^&\s]+)/)))id=m[1];
   else if((m=url.match(/\/d\/([^\/?\s]+)/)))id=m[1];
   else if((m=url.match(/file\/d\/([^\/?\s]+)/)))id=m[1];
-  if(id){
-    return{thumb:`https://lh3.googleusercontent.com/d/${id}=w300`,full:`https://lh3.googleusercontent.com/d/${id}=w1200`};
-  }
+  if(id)return{thumb:`https://drive.google.com/thumbnail?id=${id}&sz=w400`,full:`https://drive.google.com/thumbnail?id=${id}&sz=w1200`};
   return{thumb:url,full:url};
 }
 
 function renderGallery(){
-  const col = galMode==='antes'?C.IMG_A:C.IMG_D;
   galItems=[];
   for(const r of filt){
-    const u=toImgUrl(r[col]);
-    if(!u)continue;
-    galItems.push({thumb:u.thumb,full:u.full,name:(r[C.ALIAS]||'').trim(),merc:(r[C.MERC]||'').trim(),sup:(r[C.SUPERVISOR]||'').trim()});
+    const ua=toImgUrl(r[C.IMG_A]);
+    const ud=toImgUrl(r[C.IMG_D]);
+    if(!ua&&!ud)continue;
+    galItems.push({
+      thumbA:ua?ua.thumb:null, fullA:ua?ua.full:null,
+      thumbD:ud?ud.thumb:null, fullD:ud?ud.full:null,
+      name:(r[C.ALIAS]||'').trim(),
+      merc:(r[C.MERC]||'').trim(),
+      sup:(r[C.SUPERVISOR]||'').trim(),
+      of:(r[C.OFICINA]||'').trim(),
+      tipo:(r[C.TIPO]||'').trim(),
+      cat:(r[C.CATEGORIA]||'').trim()
+    });
   }
   filterGallery();
 }
 
 function filterGallery(){
   const q=(g('galSearch').value||'').toLowerCase();
-  const items=galItems.filter(x=>!q||x.name.toLowerCase().includes(q)||x.merc.toLowerCase().includes(q));
+  const items=galItems.filter(x=>!q||
+    x.name.toLowerCase().includes(q)||
+    x.merc.toLowerCase().includes(q)||
+    x.of.toLowerCase().includes(q)||
+    x.tipo.toLowerCase().includes(q));
   const grid=g('galGrid');
-  if(!items.length){grid.innerHTML='<div class="gno-img">📭 '+(galItems.length?'Sin coincidencias':'No hay imágenes en este filtro')+'</div>';return;}
-  grid.innerHTML=items.map((x,i)=>`
-    <div class="gitem" onclick="openLB(${i})">
-      <img src="${x.thumb}" alt="${e(x.name)}" class="loading" onload="this.classList.remove('loading')" onerror="this.parentElement.style.display='none'">
-      <div class="gitem-overlay"><div class="gitem-name">${e(x.name)}</div><div class="gitem-merc">${e(x.merc)}</div></div>
-    </div>`).join('');
-  // Store filtered items for lightbox
+  if(!items.length){
+    grid.className='';
+    grid.innerHTML='<div class="gno-img">'+(galItems.length?'📭 Sin coincidencias':'📭 No hay imágenes registradas en estos datos')+'</div>';
+    galItems._filtered=[];return;
+  }
+  grid.className='pair-grid';
+  grid.innerHTML=items.map((x,i)=>{
+    const imgA=x.thumbA
+      ?`<img src="${x.thumbA}" alt="Antes" class="loading" onload="this.classList.remove('loading')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="no-foto" style="display:none">📷 Sin foto</div>`
+      :'<div class="no-foto">📷 Sin foto antes</div>';
+    const imgD=x.thumbD
+      ?`<img src="${x.thumbD}" alt="Después" class="loading" onload="this.classList.remove('loading')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="no-foto" style="display:none">✅ Sin foto</div>`
+      :'<div class="no-foto">✅ Sin foto después</div>';
+    return '<div class="pair-card">'
+      +'<div class="pair-info">'
+      +'<div class="pair-name">'+e(x.name)+'</div>'
+      +'<div class="pair-meta">'+e(x.merc)+' · '+e(x.of)+(x.tipo?' · '+e(x.tipo):'')+(x.cat?' · '+e(x.cat):'')+'</div>'
+      +'</div>'
+      +'<div class="pair-imgs">'
+      +'<div class="pair-img-wrap" onclick="openLB('+i+',\'A\')" title="Ver Antes"><span class="pair-badge badge-antes">Antes</span>'+imgA+'</div>'
+      +'<div class="pair-img-wrap" onclick="openLB('+i+',\'D\')" title="Ver Después"><span class="pair-badge badge-desp">Después</span>'+imgD+'</div>'
+      +'</div></div>';
+  }).join('');
   galItems._filtered=items;
 }
 
-function switchTab(mode){
-  galMode=mode;
-  g('tabAntes').classList.toggle('active',mode==='antes');
-  g('tabDesp').classList.toggle('active',mode==='despues');
-  renderGallery();
-}
-
-function openLB(i){
+function openLB(i,side){
   const items=galItems._filtered||galItems;
-  galIdx=i;
-  const x=items[i];
-  g('lbImg').src=x.full; g('lbName').textContent=x.name; g('lbMeta').textContent=`${x.merc} · ${x.sup}`;
+  galIdx=i; const x=items[i];
+  const srcA=x.fullA||''; const srcD=x.fullD||'';
+  const imgA=g('lbImgA'); const imgD=g('lbImgD');
+  const noA=g('lbNoA');   const noD=g('lbNoD');
+  if(srcA){imgA.src=srcA;imgA.style.display='';noA.style.display='none';}
+  else{imgA.style.display='none';noA.style.display='flex';}
+  if(srcD){imgD.src=srcD;imgD.style.display='';noD.style.display='none';}
+  else{imgD.style.display='none';noD.style.display='flex';}
+  g('lbName').textContent=x.name;
+  g('lbMeta').textContent=x.merc+' · '+x.of+(x.tipo?' · '+x.tipo:'');
+  g('lbCount').textContent=(i+1)+' / '+items.length;
   g('lb').classList.add('open');
 }
 function closeLB(){g('lb').classList.remove('open');}
@@ -737,7 +898,7 @@ function lbNav(d){
   galIdx=(galIdx+d+items.length)%items.length;
   openLB(galIdx);
 }
-document.addEventListener('keydown',e=>{if(!g('lb').classList.contains('open'))return;if(e.key==='ArrowRight')lbNav(1);else if(e.key==='ArrowLeft')lbNav(-1);else if(e.key==='Escape')closeLB();});
+document.addEventListener('keydown',ev=>{if(!g('lb').classList.contains('open'))return;if(ev.key==='ArrowRight')lbNav(1);else if(ev.key==='ArrowLeft')lbNav(-1);else if(ev.key==='Escape')closeLB();});
 g('lb').addEventListener('click',ev=>{if(ev.target===g('lb'))closeLB();});
 
 // ═══════════════════════════════════════════════════════════ ADDITIONAL ANALYSIS
