@@ -265,8 +265,9 @@ footer{position:relative;z-index:1;text-align:center;padding:14px;font-family:'D
   <!-- STATS -->
   <div class="sbar hidden" id="sbar">
     <div class="scard"><div class="slabel">Registros</div><div class="sval" id="sN">—</div></div>
-    <div class="scard"><div class="slabel">Total Puntos</div><div class="sval sv-gold" id="sP">—</div></div>
-    <div class="scard"><div class="slabel">Mercaderistas</div><div class="sval sv-red" id="sM">—</div></div>
+    <div class="scard"><div class="slabel">✅ Aprobados</div><div class="sval sv-gold" id="sAp">—</div></div>
+    <div class="scard"><div class="slabel">Total Puntos</div><div class="sval sv-red" id="sP">—</div></div>
+    <div class="scard"><div class="slabel">Mercaderistas</div><div class="sval" id="sM">—</div></div>
     <div class="scard"><div class="slabel">Supervisores</div><div class="sval" id="sS">—</div></div>
     <div class="scard"><div class="slabel">Jefes/Coords</div><div class="sval" id="sJ">—</div></div>
     <div class="scard"><div class="slabel">Tiendas</div><div class="sval" id="sT">—</div></div>
@@ -489,7 +490,7 @@ let C = {
   ALIAS:2, SUPERVISOR:3, OFICINA:4, JEFE:5,
   CATEGORIA:7, MERC:8, COL_J:9,
   TIPO:10, CANTIDAD:11,
-  IMG_A:12, IMG_D:13, PUNTOS:14
+  IMG_A:12, IMG_D:13, STATUS:14
 };
 
 const PTS = {'ISLA':50,'1/2 ISLA':25,'CABECERA':50,'1/2 CABECERA':25,'LATERAL':15,'1/2 LATERAL':10};
@@ -564,7 +565,7 @@ function detectCols(h) {
   const m=find('mercaderista'); if(m>=0) C.MERC=m;
   const tip=find('tipo espacio','tipo de espacio'); if(tip>=0) C.TIPO=tip;
   const can=find('cantidad'); if(can>=0) C.CANTIDAD=can;
-  const pts=find('puntos','points'); if(pts>=0) C.PUNTOS=pts;
+  const st=find('estado','status','aprobado','aprobacion'); if(st>=0) C.STATUS=st;
   const ia=find('foto antes','imagen antes','antes','before'); if(ia>=0) C.IMG_A=ia;
   const id=find('foto desp','imagen desp','despues','colocado','after','lleno'); if(id>=0) C.IMG_D=id;
 
@@ -649,11 +650,13 @@ function clearF(){
 
 // ═══════════════════════════════════════════════════════════ POINTS
 function pts(row) {
-  const v=(row[C.PUNTOS]||'').toString().trim();
-  if(v!==''){const n=parseFloat(v.replace(',','.'));if(!isNaN(n)&&n>0)return n;}
-  const tipo=(row[C.TIPO]||'').toUpperCase().trim();
-  const cant=parseFloat((row[C.CANTIDAD]||'1').replace(',','.'))||1;
-  return (PTS[tipo]||0)*cant;
+  // Solo sumar puntos si la columna O (STATUS) es "Aprobado"
+  const status = (row[C.STATUS]||'').toString().trim().toLowerCase();
+  if(status !== 'aprobado') return 0;
+  // Calcular puntos desde TIPO × CANTIDAD
+  const tipo = (row[C.TIPO]||'').toUpperCase().trim();
+  const cant = parseFloat((row[C.CANTIDAD]||'1').toString().replace(',','.'))||1;
+  return (PTS[tipo]||0) * cant;
 }
 
 // ═══════════════════════════════════════════════════════════ GROUPBY
@@ -672,10 +675,12 @@ function countBy(col){
 function renderAll(){
   const jefes=groupBy(C.JEFE), sups=groupBy(C.SUPERVISOR), mercs=groupBy(C.MERC);
   const totalP=filt.reduce((s,r)=>s+pts(r),0);
+  const aprobados=filt.filter(r=>(r[C.STATUS]||'').trim().toLowerCase()==='aprobado').length;
   const tiendas=[...new Set(filt.map(r=>(r[C.ALIAS]||'').trim()).filter(Boolean))];
 
   // Stats
   g('sN').textContent=filt.length.toLocaleString('es-CR');
+  g('sAp').textContent=aprobados.toLocaleString('es-CR');
   g('sP').textContent=totalP.toLocaleString('es-CR',{maximumFractionDigits:0});
   g('sM').textContent=mercs.length.toLocaleString('es-CR');
   g('sS').textContent=sups.length.toLocaleString('es-CR');
