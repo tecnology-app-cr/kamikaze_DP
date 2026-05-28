@@ -630,7 +630,9 @@ function populateSel(id, data, col, placeholder='') {
 function applyFilters() {
   const of=g('fOf').value, jv=g('fJ').value;
   const de=g('fDe').value, ha=g('fHa').value;
-  filt = raw.filter(r=>{
+
+  // Primero filtrar por los filtros de cabecera
+  const base = raw.filter(r=>{
     if(of&&(r[C.OFICINA]||'').trim()!==of) return false;
     if(jv&&(r[C.COL_J]||'').trim()!==jv) return false;
     if(de||ha){
@@ -639,7 +641,12 @@ function applyFilters() {
     }
     return true;
   });
-  g('fcnt').textContent=filt.length+' / '+raw.length+' registros';
+
+  // Solo mostrar registros Aprobados en todos los análisis y gráficos
+  filt = base.filter(r=>(r[C.STATUS]||'').trim().toLowerCase()==='aprobado');
+
+  const aprobados = filt.length;
+  g('fcnt').textContent=aprobados+' aprobados / '+raw.length+' registros totales';
   renderAll();
 }
 
@@ -650,10 +657,7 @@ function clearF(){
 
 // ═══════════════════════════════════════════════════════════ POINTS
 function pts(row) {
-  // Solo sumar puntos si la columna O (STATUS) es "Aprobado"
-  const status = (row[C.STATUS]||'').toString().trim().toLowerCase();
-  if(status !== 'aprobado') return 0;
-  // Calcular puntos desde TIPO × CANTIDAD
+  // filt ya solo contiene registros Aprobados — calcular desde TIPO × CANTIDAD
   const tipo = (row[C.TIPO]||'').toUpperCase().trim();
   const cant = parseFloat((row[C.CANTIDAD]||'1').toString().replace(',','.'))||1;
   return (PTS[tipo]||0) * cant;
@@ -670,17 +674,30 @@ function countBy(col){
   for(const r of filt){const k=(r[col]||'').trim();if(!k)continue;m[k]=(m[k]||0)+1;}
   return Object.entries(m).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
 }
+// Suma la columna CANTIDAD (col L) agrupada por col
+function sumBy(col){
+  const m={};
+  for(const r of filt){
+    const k=(r[col]||'').trim();if(!k)continue;
+    const cant=parseFloat((r[C.CANTIDAD]||'1').toString().replace(',','.'))||1;
+    m[k]=(m[k]||0)+cant;
+  }
+  return Object.entries(m).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
+}
+// Suma total de CANTIDAD en filt
+function totalCantidad(){
+  return filt.reduce((s,r)=>s+(parseFloat((r[C.CANTIDAD]||'1').toString().replace(',','.'))||1),0);
+}
 
 // ═══════════════════════════════════════════════════════════ RENDER ALL
 function renderAll(){
   const jefes=groupBy(C.JEFE), sups=groupBy(C.SUPERVISOR), mercs=groupBy(C.MERC);
   const totalP=filt.reduce((s,r)=>s+pts(r),0);
-  const aprobados=filt.filter(r=>(r[C.STATUS]||'').trim().toLowerCase()==='aprobado').length;
   const tiendas=[...new Set(filt.map(r=>(r[C.ALIAS]||'').trim()).filter(Boolean))];
 
-  // Stats
-  g('sN').textContent=filt.length.toLocaleString('es-CR');
-  g('sAp').textContent=aprobados.toLocaleString('es-CR');
+  // Stats — filt ya son solo los Aprobados
+  g('sN').textContent=raw.length.toLocaleString('es-CR');
+  g('sAp').textContent=filt.length.toLocaleString('es-CR');
   g('sP').textContent=totalP.toLocaleString('es-CR',{maximumFractionDigits:0});
   g('sM').textContent=mercs.length.toLocaleString('es-CR');
   g('sS').textContent=sups.length.toLocaleString('es-CR');
@@ -772,8 +789,10 @@ function renderStatTable(tableId, countArr, ptsMap, totN, totP) {
 }
 
 function renderCharts(){
+  const totCant = totalCantidad();
+
   // TABLA Categoría
-  const cat=countBy(C.CATEGORIA);
+  const cat=sumBy(C.CATEGORIA);
   const catPts={}; for(const r of filt){const k=(r[C.CATEGORIA]||'').trim();if(k)catPts[k]=(catPts[k]||0)+pts(r);}
   const catTotN=cat.reduce((s,x)=>s+x.v,0);
   const catTotP=Object.values(catPts).reduce((s,v)=>s+v,0);
@@ -781,7 +800,7 @@ function renderCharts(){
   renderStatTable('tblCat', cat, catPts, catTotN, catTotP);
 
   // TABLA Tipo Espacios
-  const tip=countBy(C.TIPO);
+  const tip=sumBy(C.TIPO);
   const tipPts={}; for(const r of filt){const k=(r[C.TIPO]||'').trim();if(k)tipPts[k]=(tipPts[k]||0)+pts(r);}
   const tipTotN=tip.reduce((s,x)=>s+x.v,0);
   const tipTotP=Object.values(tipPts).reduce((s,v)=>s+v,0);
@@ -790,21 +809,23 @@ function renderCharts(){
 
   // TABLA Top Tiendas
   const tiendas=groupBy(C.ALIAS);
-  const tiendaN={}; for(const r of filt){const k=(r[C.ALIAS]||'').trim();if(k)tiendaN[k]=(tiendaN[k]||0)+1;}
-  const tiendaTotN=Object.values(tiendaN).reduce((s,v)=>s+v,0);
+  const tiendaN=sumBy(C.ALIAS); // suma CANTIDAD por tienda
+  const tiendaNMap=Object.fromEntries(tiendaN.map(x=>[x.k,x.v]));
+  const tiendaTotN=tiendaN.reduce((s,x)=>s+x.v,0);
   const tiendaTotP=tiendas.reduce((s,x)=>s+x.v,0);
   g('totTiendas').textContent=tiendas.length+' tiendas';
-  const tiendaCountArr=tiendas.map(x=>({k:x.k,v:tiendaN[x.k]||0}));
+  const tiendaCountArr=tiendas.map(x=>({k:x.k,v:tiendaNMap[x.k]||0}));
   const tiendaPtsMap=Object.fromEntries(tiendas.map(x=>[x.k,x.v]));
   renderStatTable('tblTiendas2', tiendaCountArr, tiendaPtsMap, tiendaTotN, tiendaTotP);
 
   // TABLA Oficina
   const ofsP=groupBy(C.OFICINA);
-  const ofsN={}; for(const r of filt){const k=(r[C.OFICINA]||'').trim();if(k)ofsN[k]=(ofsN[k]||0)+1;}
-  const ofsTotN=Object.values(ofsN).reduce((s,v)=>s+v,0);
+  const ofsN=sumBy(C.OFICINA); // suma CANTIDAD por oficina
+  const ofsNMap=Object.fromEntries(ofsN.map(x=>[x.k,x.v]));
+  const ofsTotN=ofsN.reduce((s,x)=>s+x.v,0);
   const ofsTotP=ofsP.reduce((s,x)=>s+x.v,0);
   g('totOf').textContent=ofsP.length+' zonas · '+ofsTotN+' espacios';
-  const ofsCountArr=ofsP.map(x=>({k:x.k,v:ofsN[x.k]||0}));
+  const ofsCountArr=ofsP.map(x=>({k:x.k,v:ofsNMap[x.k]||0}));
   const ofsPtsMap=Object.fromEntries(ofsP.map(x=>[x.k,x.v]));
   // Render oficina table with extra % puntos column
   const ofTbody=g('tblOf').querySelector('tbody');
@@ -1026,12 +1047,13 @@ g('lb').addEventListener('click',ev=>{if(ev.target===g('lb'))closeLB();});
 
 // ═══════════════════════════════════════════════════════════ ADDITIONAL ANALYSIS
 function renderAddAnalysis(){
-  // Tabla tiendas
+  // Tabla tiendas — suma CANTIDAD real, no filas
   const byTienda={};
   for(const r of filt){
     const k=(r[C.ALIAS]||'').trim(); if(!k)continue;
+    const cant=parseFloat((r[C.CANTIDAD]||'1').toString().replace(',','.'))||1;
     if(!byTienda[k])byTienda[k]={alias:k,sup:(r[C.SUPERVISOR]||'').trim(),of:(r[C.OFICINA]||'').trim(),n:0,pts:0};
-    byTienda[k].n++;byTienda[k].pts+=pts(r);
+    byTienda[k].n+=cant; byTienda[k].pts+=pts(r);
   }
   const tArr=Object.values(byTienda).sort((a,b)=>b.pts-a.pts);
   const ttb=g('tblTiendas').querySelector('tbody');
@@ -1039,15 +1061,19 @@ function renderAddAnalysis(){
     <tr><td class="r">${i+1}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${e(alias)}">${e(alias)}</td>
     <td style="font-size:.7rem;color:var(--tm);">${e(sup.split(' ')[0]||'')}</td>
     <td style="font-size:.7rem;color:var(--tm);">${e(of)}</td>
-    <td class="r">${n}</td><td class="r" style="color:var(--gold);font-weight:700;">${p.toLocaleString('es-CR',{maximumFractionDigits:0})}</td></tr>`).join('');
+    <td class="r">${n.toLocaleString('es-CR',{maximumFractionDigits:0})}</td><td class="r" style="color:var(--gold);font-weight:700;">${p.toLocaleString('es-CR',{maximumFractionDigits:0})}</td></tr>`).join('');
 
-  // Cruce Categoría × Tipo
+  // Cruce Categoría × Tipo — suma CANTIDAD real
   const cats=[...new Set(filt.map(r=>(r[C.CATEGORIA]||'').trim()).filter(Boolean))].sort();
   const tipos=[...new Set(filt.map(r=>(r[C.TIPO]||'').trim()).filter(Boolean))].sort();
   const mx2={};
   for(const r of filt){
     const cat=(r[C.CATEGORIA]||'').trim(),tipo=(r[C.TIPO]||'').trim();
-    if(cat&&tipo){const k=cat+'||'+tipo;mx2[k]=(mx2[k]||0)+1;}
+    if(cat&&tipo){
+      const k=cat+'||'+tipo;
+      const cant=parseFloat((r[C.CANTIDAD]||'1').toString().replace(',','.'))||1;
+      mx2[k]=(mx2[k]||0)+cant;
+    }
   }
   const maxV=Math.max(1,...Object.values(mx2));
   const cw=g('crossWrap');
@@ -1055,8 +1081,8 @@ function renderAddAnalysis(){
   let tbl=`<table class="at" style="font-size:.68rem;"><thead><tr><th>Categoría</th>${tipos.map(t=>`<th class="r" style="white-space:nowrap;font-size:.56rem;">${e(t)}</th>`).join('')}<th class="r">Total</th></tr></thead><tbody>`;
   for(const cat of cats){
     let rowT=0;
-    const cells=tipos.map(tipo=>{const v=mx2[cat+'||'+tipo]||0;rowT+=v;const op=v?Math.max(.15,v/maxV):.05;return`<td class="r"><span style="display:inline-block;padding:1px 5px;border-radius:3px;background:rgba(220,38,38,${op});color:${v?'var(--text)':'var(--td)'};">${v||'—'}</span></td>`;});
-    tbl+=`<tr><td style="font-weight:600;white-space:nowrap;">${e(cat)}</td>${cells.join('')}<td class="r" style="font-weight:700;color:var(--gold);">${rowT}</td></tr>`;
+    const cells=tipos.map(tipo=>{const v=mx2[cat+'||'+tipo]||0;rowT+=v;const op=v?Math.max(.15,v/maxV):.05;return`<td class="r"><span style="display:inline-block;padding:1px 5px;border-radius:3px;background:rgba(220,38,38,${op});color:${v?'var(--text)':'var(--td)'};">${v.toLocaleString('es-CR',{maximumFractionDigits:0})||'—'}</span></td>`;});
+    tbl+=`<tr><td style="font-weight:600;white-space:nowrap;">${e(cat)}</td>${cells.join('')}<td class="r" style="font-weight:700;color:var(--gold);">${rowT.toLocaleString('es-CR',{maximumFractionDigits:0})}</td></tr>`;
   }
   tbl+='</tbody></table>';
   cw.innerHTML=tbl;
