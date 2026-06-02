@@ -298,7 +298,30 @@ footer{position:relative;z-index:1;text-align:center;padding:14px;font-family:'D
       <!-- MERCADERISTAS -->
       <div class="rkcard">
         <div class="rkhead"><span class="rkicon">🏆</span><span class="rktitle">Mercaderista</span><span class="rkcnt" id="cM">—</span></div>
-        <div class="tscroll"><table class="rkt"><thead><tr><th style="width:30px">#</th><th>Nombre</th><th class="r">Pts</th><th class="r">Premio</th></tr></thead><tbody id="tbM"></tbody></table></div>
+        <div class="tscroll"><table class="rkt"><thead><tr><th style="width:30px">#</th><th>Nombre</th><th>Pertenece</th><th class="r">Pts</th><th class="r">Premio</th></tr></thead><tbody id="tbM"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ── TABLA PREMIOS POR PERTENECE ── -->
+    <div class="sec-div"><span class="sec-ttl">🎁 Premios por Pertenece</span></div>
+    <div style="margin-bottom:16px;">
+      <div class="achart">
+        <div class="ach-head"><span class="ach-icon">🏅</span><span class="ach-title">Ganadores de Premio por Grupo</span><span class="ach-sub" id="totPrem"></span></div>
+        <div class="ach-body" style="padding:0;">
+          <div style="overflow-x:hidden;overflow-y:visible;">
+            <table class="at" id="tblPrem">
+              <thead><tr>
+                <th>#</th>
+                <th style="min-width:140px;">Pertenece</th>
+                <th class="r" style="white-space:nowrap;">🥇 ₡50K</th>
+                <th class="r" style="white-space:nowrap;">🥈 ₡25K</th>
+                <th class="r" style="white-space:nowrap;">Total</th>
+                <th class="r" style="white-space:nowrap;">Puntos</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -706,7 +729,17 @@ function renderAll(){
 
   renderRanking('tbJ','cJ',jefes,false);
   renderRanking('tbS','cS',sups,false);
-  renderRanking('tbM','cM',mercs,true);
+  // Build Pertenece map for mercaderistas (last known value per merc)
+  const pertMap={};
+  for(const r of filt){
+    const m=(r[C.MERC]||'').trim();
+    const j=(r[C.COL_J]||'').trim();
+    if(m&&j) pertMap[m]=j;
+  }
+  renderRanking('tbM','cM',mercs,true,pertMap);
+
+  // Render prize table by Pertenece
+  renderPremiosPorPertenece(mercs, pertMap);
 
   renderCharts();
   renderGallery();
@@ -715,9 +748,10 @@ function renderAll(){
 
 // ═══════════════════════════════════════════════════════════ RANKINGS
 const MED=['🥇','🥈','🥉'];
-function renderRanking(tid,cid,rk,prizes){
+function renderRanking(tid,cid,rk,prizes,pertMap){
   g(cid).textContent=rk.length+' participantes';
-  const tb=g(tid); if(!rk.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--tm);font-size:.78rem;">Sin datos</td></tr>';return;}
+  const cols=prizes?5:4;
+  const tb=g(tid); if(!rk.length){tb.innerHTML=`<tr><td colspan="${cols}" style="text-align:center;padding:20px;color:var(--tm);font-size:.78rem;">Sin datos</td></tr>`;return;}
   const mx=rk[0].v||1;
   tb.innerHTML=rk.map(({k,v},i)=>{
     const cls=i===0?'g1':i===1?'g2':i===2?'g3':'';
@@ -726,8 +760,61 @@ function renderRanking(tid,cid,rk,prizes){
     const extra=prizes?
       (i<90?'<span class="pb p50k">₡50K</span>':i<120?'<span class="pb p25k">₡25K</span>':''):
       `<div class="rbarw"><div class="rbar" style="width:${pct}%"></div></div>`;
-    return `<tr class="${cls}"><td><span class="rpos">${pos}</span></td><td><span class="rname" title="${e(k)}">${e(k)}</span></td><td class="r"><span class="rpts">${v.toLocaleString('es-CR',{maximumFractionDigits:0})}</span></td><td class="r">${extra}</td></tr>`;
+    const pertCell=prizes?
+      `<td style="font-size:.68rem;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;" title="${e(pertMap&&pertMap[k]||'')}">${e(pertMap&&pertMap[k]||'—')}</td>`
+      :'';
+    return `<tr class="${cls}"><td><span class="rpos">${pos}</span></td><td><span class="rname" title="${e(k)}">${e(k)}</span></td>${pertCell}<td class="r"><span class="rpts">${v.toLocaleString('es-CR',{maximumFractionDigits:0})}</span></td><td class="r">${extra}</td></tr>`;
   }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════ PREMIOS POR PERTENECE
+function renderPremiosPorPertenece(mercs, pertMap){
+  // Group mercs by Pertenece and count prize tiers
+  const byPert={};
+  mercs.forEach(({k,v},i)=>{
+    const pert=pertMap[k]||'Sin Grupo';
+    if(!byPert[pert]) byPert[pert]={name:pert,p50:0,p25:0,pts:0};
+    if(i<90) byPert[pert].p50++;
+    else if(i<120) byPert[pert].p25++;
+    byPert[pert].pts+=v;
+  });
+
+  const rows=Object.values(byPert).sort((a,b)=>b.pts-a.pts);
+  const totP50=rows.reduce((s,r)=>s+r.p50,0);
+  const totP25=rows.reduce((s,r)=>s+r.p25,0);
+  const totMercs=totP50+totP25;
+  const totPts=rows.reduce((s,r)=>s+r.pts,0);
+
+  g('totPrem').textContent=`${rows.length} grupos · ${totMercs} ganadores`;
+
+  const tbody=g('tblPrem').querySelector('tbody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:18px;color:var(--tm);">Sin datos</td></tr>';return;}
+
+  const DOTS=['#f59e0b','#9ca3af','#b45309','#3b82f6','#a855f7','#22c55e','#ec4899','#14b8a6'];
+  tbody.innerHTML=rows.map((r,i)=>{
+    const dot=DOTS[i%DOTS.length];
+    const total=r.p50+r.p25;
+    return `<tr>
+      <td style="color:var(--td);font-family:'DM Mono',monospace;font-size:.68rem;">${i+1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${dot};flex-shrink:0;box-shadow:0 0 4px ${dot}66;"></span>
+          <span style="font-weight:600;font-size:.78rem;">${e(r.name)}</span>
+        </div>
+      </td>
+      <td class="r"><span style="background:rgba(245,158,11,.14);color:var(--gold);border:1px solid rgba(245,158,11,.3);padding:1px 7px;border-radius:4px;font-size:.7rem;font-weight:800;">${r.p50}</span></td>
+      <td class="r"><span style="background:rgba(107,114,128,.14);color:#d1d5db;border:1px solid rgba(107,114,128,.3);padding:1px 7px;border-radius:4px;font-size:.7rem;font-weight:800;">${r.p25}</span></td>
+      <td class="r" style="font-family:'DM Mono',monospace;font-weight:700;">${total}</td>
+      <td class="r" style="font-family:'DM Mono',monospace;color:var(--gold);font-weight:700;">${r.pts.toLocaleString('es-CR',{maximumFractionDigits:0})}</td>
+    </tr>`;
+  }).join('')
+  +`<tr style="border-top:1px solid rgba(220,38,38,.2);background:var(--s2);">
+    <td colspan="2" style="padding:7px 12px;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tm);">TOTAL</td>
+    <td class="r"><span style="background:rgba(245,158,11,.14);color:var(--gold);border:1px solid rgba(245,158,11,.3);padding:1px 7px;border-radius:4px;font-size:.7rem;font-weight:800;">${totP50}</span></td>
+    <td class="r"><span style="background:rgba(107,114,128,.14);color:#d1d5db;border:1px solid rgba(107,114,128,.3);padding:1px 7px;border-radius:4px;font-size:.7rem;font-weight:800;">${totP25}</span></td>
+    <td class="r" style="font-family:'DM Mono',monospace;font-weight:800;">${totMercs}</td>
+    <td class="r" style="font-family:'DM Mono',monospace;font-weight:800;color:var(--gold);">${totPts.toLocaleString('es-CR',{maximumFractionDigits:0})}</td>
+  </tr>`;
 }
 
 // ═══════════════════════════════════════════════════════════ CHARTS
