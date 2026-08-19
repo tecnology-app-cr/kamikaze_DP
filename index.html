@@ -1250,6 +1250,7 @@ function hide(id){g(id).classList.add('hidden');}
 function setLd(t){const el=g('ldtxt');if(el)el.textContent=t;}
 function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toDate(s){if(!s)return null;s=String(s).trim();let m;if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/)))return new Date(+m[1],+m[2]-1,+m[3]);if((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/)))return new Date(+m[3],+m[2]-1,+m[1]);if((m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)))return new Date(+m[3],+m[2]-1,+m[1]);return null;}
+function fmtDate(d){if(!d)return '';const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;}
 
 loadData();
 </script>
