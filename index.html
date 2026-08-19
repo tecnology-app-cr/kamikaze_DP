@@ -509,7 +509,8 @@ let C = {
   ALIAS:2, SUPERVISOR:3, OFICINA:4, JEFE:5,
   CATEGORIA:7, MERC:8, COL_J:9,
   TIPO:10, CANTIDAD:11,
-  IMG_A:12, IMG_D:13, STATUS:14
+  IMG_A:12, IMG_D:13,
+  PUNTOS:15, FECHA:16, STATUS:17   // columnas reales del CSV
 };
 
 const PTS = {'ISLA':50,'1/2 ISLA':30,'CABECERA':50,'1/2 CABECERA':30,'LATERAL':20};
@@ -527,10 +528,13 @@ const PROXIES = [
   u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
 ];
 // URL publicada (sin CORS, sin auth — siempre primero)
-const PUB_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR1FnAliKhLjLoyK9wgeAzxD2gjU1ULWo-hgavRyQPdg8aw2WLs5ycYP08-73exTYsUktCMbWVgWmd9/pub?output=csv&gid=917931316';
+const PUB_ID = '2PACX-1vR1FnAliKhLjLoyK9wgeAzxD2gjU1ULWo-hgavRyQPdg8aw2WLs5ycYP08-73exTYsUktCMbWVgWmd9';
+const PUB_CSV_URL  = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pub?gid=${GID}&single=true&output=csv`;
+const PUB_CSV_URL2 = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pub?output=csv&gid=${GID}`;
 
 const BASE_URLS = [
   PUB_CSV_URL,
+  PUB_CSV_URL2,
   `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`,
   `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`,
 ];
@@ -541,18 +545,27 @@ async function fetchCSV() {
     tries.push({l:'directo',u:b});
     for (const px of PROXIES) tries.push({l:'proxy',u:px(b)});
   }
+  const errors = [];
   for (const {l,u} of tries) {
     try {
-      setLd('Intentando '+l+'...');
-      const r = await fetch(u,{cache:'no-store'});
-      if (!r.ok) continue;
+      setLd(`Cargando datos...`);
+      const r = await fetch(u, {cache:'no-store'});
+      if (!r.ok) { errors.push(`${l}: HTTP ${r.status}`); continue; }
       const t = await r.text();
-      if (!t||t.length<20) continue;
-      if (t.includes('accounts.google.com')||t.startsWith('<!DOCTYPE')) continue;
+      if (!t || t.length < 10) { errors.push(`${l}: respuesta vacía`); continue; }
+      // Reject login redirects
+      if (t.includes('accounts.google.com')) { errors.push(`${l}: redirige a login`); continue; }
+      // Accept HTML only if it contains CSV-like data
+      if (t.startsWith('<!DOCTYPE') || t.startsWith('<html')) {
+        errors.push(`${l}: devolvió HTML en vez de CSV`); continue;
+      }
+      // Valid CSV must have at least one comma
+      if (!t.includes(',')) { errors.push(`${l}: no parece CSV`); continue; }
+      console.log('✅ Datos cargados desde:', l, u.slice(0,60));
       return t;
-    } catch(e){}
+    } catch(e) { errors.push(`${l}: ${e.message}`); }
   }
-  throw new Error('No se pudo conectar. Publica la hoja: Archivo → Compartir → Publicar en la web → CSV');
+  throw new Error('No se pudo cargar.\n\nErrores:\n' + errors.slice(0,6).join('\n') + '\n\nSolución: Archivo → Compartir → Publicar en la web → Pestaña EXHIBICION_INCREMENTAL → CSV → Publicar');
 }
 
 // ═══════════════════════════════════════════════════════════ PARSE CSV
@@ -615,6 +628,14 @@ async function loadData() {
     hdr = rows[0];
     detectCols(hdr);
     raw = rows.slice(1).filter(r=>r.length>5);
+    // Pre-fill date range from FECHA column (index 16)
+    const fechas = raw.map(r=>toDate(r[C.FECHA])).filter(Boolean);
+    if(fechas.length){
+      const mn=fechas.reduce((a,b)=>a<b?a:b);
+      const mx=fechas.reduce((a,b)=>a>b?a:b);
+      if(!g('fDe').value) g('fDe').value=fmtDate(mn);
+      if(!g('fHa').value) g('fHa').value=fmtDate(mx);
+    }
 
     // Populate filters
     populateSel('fOf', raw, C.OFICINA);
@@ -629,14 +650,17 @@ async function loadData() {
     loadDriveMap();
   } catch(e) {
     hide('ldwrap'); show('errwrap');
+    const errMsg = e.message.replace(/\n/g,'<br>');
     document.getElementById('errwrap').innerHTML=`<div class="errbox">
-      <strong>⚠️ Error al cargar datos</strong><br><code>${e.message}</code><br>
-      <strong>Pasos para publicar la hoja:</strong><ol>
-      <li>Archivo → Compartir → <strong>Publicar en la web</strong></li>
-      <li>Selecciona la pestaña del concurso y elige <strong>CSV</strong></li>
-      <li>Clic en <strong>Publicar</strong> y confirma</li>
+      <strong>⚠️ Error al cargar datos</strong><br><br>
+      <code style="white-space:pre-wrap;font-size:.72rem;">${errMsg}</code><br><br>
+      <strong>Pasos para solucionar:</strong><ol>
+      <li>Abre Google Sheets → <strong>Archivo → Compartir → Publicar en la web</strong></li>
+      <li>Primer desplegable: elige <strong>"EXHIBICION_INCREMENTAL"</strong></li>
+      <li>Segundo desplegable: elige <strong>"Valores separados por comas (.csv)"</strong></li>
+      <li>Clic en <strong>Publicar</strong> → Confirmar → espera 30 segundos</li>
       <li>Recarga este dashboard</li></ol>
-      <em>Nota: "Compartir con link" ≠ "Publicar en web". Ambos son necesarios.</em></div>`;
+      <em>Si ya lo hiciste, espera 1-2 minutos y presiona "Actualizar".</em></div>`;
   } finally {
     btn.disabled=false;
     btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> Actualizar';
@@ -650,7 +674,9 @@ function populateSel(id, data, col, placeholder='') {
   // Excluir el valor del encabezado (hdr[col]) para que no aparezca como opción
   const headerVal=(hdr[col]||'').trim().toLowerCase();
   const vals=[...new Set(data.map(r=>(r[col]||'').trim()).filter(v=>v&&v.toLowerCase()!==headerVal))].sort();
-  sel.innerHTML=`<option value="">${placeholder||'Todos'}</option>`;
+  // El placeholder siempre dice "Todos" con el nombre de la columna entre paréntesis
+  const label = placeholder ? `Todos — ${placeholder}` : 'Todos';
+  sel.innerHTML=`<option value="">${label}</option>`;
   vals.forEach(v=>{const o=document.createElement('option');o.value=o.textContent=v;if(v===prev)o.selected=true;sel.appendChild(o);});
 }
 
@@ -664,17 +690,21 @@ function applyFilters() {
     if(of&&(r[C.OFICINA]||'').trim()!==of) return false;
     if(jv&&(r[C.COL_J]||'').trim()!==jv) return false;
     if(de||ha){
-      const d=toDate(r[0]);
+      const d=toDate(r[C.FECHA]);
       if(d){if(de&&d<new Date(de+'T00:00:00'))return false;if(ha&&d>new Date(ha+'T23:59:59'))return false;}
     }
     return true;
   });
 
   // Solo mostrar registros Aprobados en todos los análisis y gráficos
-  filt = base.filter(r=>(r[C.STATUS]||'').trim().toLowerCase()==='aprobado');
+  filt = base.filter(r=>{
+    const st=(r[C.STATUS]||'').trim().toLowerCase();
+    return st==='aprobado';
+  });
 
   const aprobados = filt.length;
-  g('fcnt').textContent=aprobados+' aprobados / '+raw.length+' registros totales';
+  const pendientes=base.length-aprobados;
+  g('fcnt').textContent=aprobados+' aprobados · '+pendientes+' pendientes · '+raw.length+' total';
   renderAll();
 }
 
@@ -685,7 +715,10 @@ function clearF(){
 
 // ═══════════════════════════════════════════════════════════ POINTS
 function pts(row) {
-  // filt ya solo contiene registros Aprobados — calcular desde TIPO × CANTIDAD
+  // Usar columna PUNTOS real (índice 15) si tiene valor
+  const pVal = parseFloat((row[C.PUNTOS]||'').toString().replace(',','.'));
+  if (!isNaN(pVal) && pVal > 0) return pVal;
+  // Fallback: calcular desde TIPO × CANTIDAD
   const tipo = (row[C.TIPO]||'').toUpperCase().trim();
   const cant = parseFloat((row[C.CANTIDAD]||'1').toString().replace(',','.'))||1;
   return (PTS[tipo]||0) * cant;
@@ -1216,7 +1249,7 @@ function show(id){g(id).classList.remove('hidden');}
 function hide(id){g(id).classList.add('hidden');}
 function setLd(t){const el=g('ldtxt');if(el)el.textContent=t;}
 function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function toDate(s){if(!s)return null;s=String(s).trim();let m;if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/)))return new Date(+m[1],+m[2]-1,+m[3]);if((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/)))return new Date(+m[3],+m[1]-1,+m[2]);return null;}
+function toDate(s){if(!s)return null;s=String(s).trim();let m;if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/)))return new Date(+m[1],+m[2]-1,+m[3]);if((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/)))return new Date(+m[3],+m[2]-1,+m[1]);if((m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)))return new Date(+m[3],+m[2]-1,+m[1]);return null;}
 
 loadData();
 </script>
